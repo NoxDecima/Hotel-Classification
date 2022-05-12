@@ -26,8 +26,6 @@ if __name__ == "__main__":
     train_images_path = "/kaggle/input/hotel-id-to-combat-human-trafficking-2022-fgvc9/train_images"
     train_masks_path = "/kaggle/input/hotel-id-to-combat-human-trafficking-2022-fgvc9/train_masks"
 
-    test_images_path = ""
-
     transform = transforms.Compose([transforms.Resize(1024),
                                     transforms.CenterCrop(1024),
                                     transforms.ToTensor(),
