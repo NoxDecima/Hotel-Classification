@@ -25,8 +25,6 @@ if __name__ == "__main__":
     train_images_path = "./data/train_images"
     train_masks_path = "./data/train_masks"
 
-    test_images_path = ""
-
     transform = transforms.Compose([transforms.Resize(1024),
                                     transforms.CenterCrop(1024),
                                     transforms.ToTensor(),
