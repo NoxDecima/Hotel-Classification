@@ -5,8 +5,8 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 import torch as t
 
-from src.data.TrainDataset import TrainDataset
-from src.model.AlexNet import AlexNet
+from data.TrainDataset import TrainDataset
+from model.AlexNet import AlexNet
 
 
 def generatePatches(img: t.Tensor):
@@ -22,9 +22,8 @@ def generatePatches(img: t.Tensor):
 
 
 if __name__ == "__main__":
-
-    train_images_path = "/kaggle/input/hotel-id-to-combat-human-trafficking-2022-fgvc9/train_images"
-    train_masks_path = "/kaggle/input/hotel-id-to-combat-human-trafficking-2022-fgvc9/train_masks"
+    train_images_path = "./data/train_images"
+    train_masks_path = "./data/train_masks"
 
     test_images_path = ""
 
@@ -38,7 +37,7 @@ if __name__ == "__main__":
                                  train_masks_path)
 
     train_dataloader = DataLoader(train_dataset,
-                                  num_workers=2,
+                                  num_workers=16,
                                   batch_size=16,
                                   shuffle=True)
 
@@ -49,7 +48,7 @@ if __name__ == "__main__":
 
     trainer = pytorch_lightning.Trainer(
         max_epochs=1,
-        gpus=1
+        gpus=0
     )
 
     trainer.fit(model, train_dataloader)
