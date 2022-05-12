@@ -34,4 +34,4 @@ fi
 # install the dependencies
 source "$VENV_DIR"/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -r "$PROJECT_DIR"/requirements.txt -f https://download.pytorch.org/whl/cu111/torch_stable.html
+python -m pip install -r "$PROJECT_DIR"/requirements.txt -f https://download.pytorch.org/whl/cu113/torch_stable.html
