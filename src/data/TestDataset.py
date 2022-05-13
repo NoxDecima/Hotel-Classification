@@ -16,7 +16,7 @@ class TestDataset(Dataset):
         df = pd.DataFrame(columns={'image_id', 'path'})
         for dirname, _, images in tqdm(os.walk(path), desc="Preparing dataset"):
             for image_id in images:
-                df = df.append({'image_id': image_id, 'path': dirname}, ignore_index=True)
+                df = pd.concat((df, pd.DataFrame({'image_id': [image_id], 'path': [dirname]})), ignore_index=True)
 
         self.df = df
 
