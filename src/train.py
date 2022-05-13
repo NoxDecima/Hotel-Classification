@@ -35,8 +35,8 @@ if __name__ == "__main__":
                                  train_masks_path)
 
     train_dataloader = DataLoader(train_dataset,
-                                  num_workers=16,
-                                  batch_size=16,
+                                  num_workers=4,
+                                  batch_size=8,
                                   shuffle=True)
 
     model = AlexNet(3116,
@@ -45,8 +45,10 @@ if __name__ == "__main__":
                     train_dataset.hotel_id_mapping)
 
     trainer = pytorch_lightning.Trainer(
-        max_epochs=1,
-        gpus=0
+        max_epochs=5,
+        gpus=1
     )
 
     trainer.fit(model, train_dataloader)
+
+    trainer.save_checkpoints("/ckpts/model.ckpt")
