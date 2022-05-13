@@ -1,6 +1,7 @@
 import math
 
 import pytorch_lightning
+from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from torch.utils.data import DataLoader
 from torchvision import transforms
 import torch as t
@@ -30,25 +31,39 @@ if __name__ == "__main__":
                                     transforms.ToTensor(),
                                     transforms.Lambda(generatePatches)])
 
-    train_dataset = TrainDataset(transform,
-                                 train_images_path,
-                                 train_masks_path)
+    dataset = TrainDataset(transform,
+                           train_images_path,
+                           train_masks_path)
 
     train_dataloader = DataLoader(train_dataset,
                                   num_workers=4,
                                   batch_size=8,
                                   shuffle=True)
 
-    model = AlexNet(3116,
-                    244,
-                    0.001,
-                    train_dataset.hotel_id_mapping)
+    val_dataloader = DataLoader(val_set,
+                                num_workers=4,
+                                batch_size=16,
+                                shuffle=False)
 
-    trainer = pytorch_lightning.Trainer(
-        max_epochs=5,
-        gpus=1
+    model = AlexNet(3116,
+                    0.001,
+                    dataset.hotel_id_mapping)
+
+    pattern = "epoch_{epoch:04d}.ndcg_{val_ndcg@5_epoch:.6f}"
+    ModelCheckpoint.CHECKPOINT_NAME_LAST = pattern + ".last"
+    checkpointer = ModelCheckpoint(
+        monitor="val_ndcg@5_epoch",
+        filename=pattern + ".best",
+        mode='max',
+        save_last=True,
+        auto_insert_metric_name=False,
     )
 
-    trainer.fit(model, train_dataloader)
+    trainer = pytorch_lightning.Trainer(
+        max_epochs=4,
+        gpus=1,
+        callbacks=[checkpointer, LearningRateMonitor()],
+        default_root_dir="logs",
+    )
 
-    trainer.save_checkpoints("/ckpts/model.ckpt")
+    trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)

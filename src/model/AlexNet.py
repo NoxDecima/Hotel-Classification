@@ -2,6 +2,8 @@ from typing import Tuple, Dict
 import torch as t
 from torch import nn
 from pytorch_lightning import LightningModule
+from torch.nn.functional import one_hot
+from torchmetrics.retrieval.ndcg import retrieval_normalized_dcg
 
 import pandas as pd
 
@@ -9,14 +11,12 @@ import pandas as pd
 class AlexNet(LightningModule):
     def __init__(self,
                  num_classes: int,
-                 img_size: int,
                  learning_rate: float,
                  hotel_id_mapping: Dict):
         super().__init__()
         self.save_hyperparameters()
 
         self.num_classes = num_classes
-        self.img_size = img_size
         self.learning_rate = learning_rate
         self.hotel_id_mapping = hotel_id_mapping
 
@@ -42,7 +42,7 @@ class AlexNet(LightningModule):
             nn.Linear(4096, 4096),
             nn.ReLU(),
             nn.Linear(4096, num_classes),
-            nn.LogSoftmax(),
+            nn.LogSoftmax(dim=1),
         )
 
         self.loss = nn.NLLLoss()
@@ -60,13 +60,12 @@ class AlexNet(LightningModule):
 
         return res
 
-    def reduce_patches(self, x: t.Tensor) -> t.Tensor:
-        batch_size, patches, num_classes = x.shape
-
+    @staticmethod
+    def reduce_patches(x: t.Tensor) -> t.Tensor:
         log_p = t.sum(x, dim=1)
 
-        norm_log_p = log_p - t.max(log_p, dim=1).values[:,
-                             None]  # This is an approximation for normalization could break how loss works. INVESTIGATE maybe.
+        # This is an approximation for normalization could break how loss works. INVESTIGATE maybe.
+        norm_log_p = log_p - t.max(log_p, dim=1).values[:, None]
 
         return norm_log_p
 
@@ -76,6 +75,25 @@ class AlexNet(LightningModule):
         y_hat = self.forward(x)
 
         loss = self.loss(y_hat, y)
+
+        self.log("train_ndcg@5", retrieval_normalized_dcg(y_hat, one_hot(y, self.num_classes), k=5),
+                 prog_bar=True, on_epoch=True, on_step=True)
+        self.log("train_loss", loss,
+                 on_step=True, on_epoch=True)
+
+        return loss
+
+    def validation_step(self, batch: Tuple[t.Tensor, t.Tensor], *args, **kwargs) -> t.Tensor:
+        x, y = batch
+
+        y_hat = self.forward(x)
+
+        loss = self.loss(y_hat, y)
+
+        self.log("val_ndcg@5", retrieval_normalized_dcg(y_hat, one_hot(y, self.num_classes), k=5),
+                 prog_bar=True, on_epoch=True, on_step=True)
+        self.log("val_loss", loss,
+                 on_step=True, on_epoch=True)
 
         return loss
 
