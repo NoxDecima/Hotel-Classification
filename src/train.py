@@ -61,6 +61,7 @@ if __name__ == "__main__":
     checkpointer = ModelCheckpoint(
         monitor="val_ndcg@5_epoch",
         filename=pattern + ".best",
+        mode='max',
         save_last=True,
         auto_insert_metric_name=False,
     )
