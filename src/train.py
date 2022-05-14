@@ -35,8 +35,11 @@ if __name__ == "__main__":
                            train_images_path,
                            train_masks_path)
 
-    train_dataloader = DataLoader(train_dataset,
-                                  num_workers=4,
+    train_set, val_set = t.utils.data.random_split(dataset,
+                                                   [int(len(dataset) * (1 - val_split)), int(len(dataset) * val_split)+1])
+
+    train_dataloader = DataLoader(train_set,
+                                  num_workers=8,
                                   batch_size=8,
                                   shuffle=True)
 

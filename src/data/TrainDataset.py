@@ -26,13 +26,9 @@ class TrainDataset(Dataset):
         for i, hotel_id in enumerate(tqdm(class_dirs, desc="Preparing dataset")):
             for dirname, _, images in os.walk(os.path.join(path, hotel_id)):
                 for image_id in images:
-<<<<<<< HEAD
-                    df = pd.concat([df, pd.DataFrame({'hotel_id': [hotel_id], 'class_id': [i], 'image_id': [image_id], 'path': [dirname]})],ignore_index=True)
-=======
                     df = pd.concat((df, pd.DataFrame({'hotel_id': [hotel_id], 'class_id': [i], 'image_id': [image_id], 'path': [dirname]})),
                                    ignore_index=True)
 
->>>>>>> d5ef6c49aac003becaff918fab6fe636bf670dcb
             self.hotel_id_mapping[i] = hotel_id
 
         # TODO save dataframe and load it for known dataset.
