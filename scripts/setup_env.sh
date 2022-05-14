@@ -24,7 +24,7 @@ fi
 mkdir -p "$VENV_DIR"
 
 # create the virtual environment
-python3 -m venv "$VENV_DIR"
+python -m venv "$VENV_DIR"
 
 # create a symlink to the 'venv' folder if we're on the cluster
 if [ ! -f "$PROJECT_DIR"/venv ]; then
@@ -33,5 +33,5 @@ fi
 
 # install the dependencies
 source "$VENV_DIR"/bin/activate
-python3 -m pip install --upgrade pip
-python3 -m pip install -r "$PROJECT_DIR"/requirements.txt -f https://download.pytorch.org/whl/cu113/torch_stable.html
+python -m pip install --upgrade pip
+python -m pip install -r "$PROJECT_DIR"/requirements.txt -f https://download.pytorch.org/whl/cu113/torch_stable.html

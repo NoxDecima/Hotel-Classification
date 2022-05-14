@@ -6,16 +6,16 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 import torch as t
 
-from src.data.TrainDataset import TrainDataset
-from src.model.Transformer import ViT
+from data.TrainDataset import TrainDataset
+from model.Transformer import ViT
 
 
 if __name__ == "__main__":
 
     pytorch_lightning.seed_everything(1234)
 
-    train_images_path = "data/hotel-id-to-combat-human-trafficking-2022-fgvc9/train_images"
-    train_masks_path = "data/hotel-id-to-combat-human-trafficking-2022-fgvc9/train_masks"
+    train_images_path = "./data/train_images"
+    train_masks_path = "./data/train_masks"
     val_split = 0.2
 
     transform = transforms.Compose([transforms.Resize(512),
