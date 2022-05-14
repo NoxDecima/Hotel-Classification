@@ -55,10 +55,10 @@ if __name__ == "__main__":
         lr=3e-4
     )
 
-    pattern = "epoch_{epoch:04d}.ndcg_{val_ndcg@5_epoch:.6f}"
+    pattern = "epoch_{epoch:04d}.ndcg_{val_ndcg@5:.6f}"
     ModelCheckpoint.CHECKPOINT_NAME_LAST = pattern + ".last"
     checkpointer = ModelCheckpoint(
-        monitor="val_ndcg@5_epoch",
+        monitor="val_ndcg@5",
         filename=pattern + ".best",
         mode='max',
         save_last=True,
