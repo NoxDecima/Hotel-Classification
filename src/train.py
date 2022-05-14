@@ -7,19 +7,7 @@ from torchvision import transforms
 import torch as t
 
 from src.data.TrainDataset import TrainDataset
-from src.model.AlexNet import AlexNet
-
-
-def generatePatches(img: t.Tensor):
-    nr_of_patches_per_axis = 4
-    patch_size_w = math.floor(img.shape[1] / nr_of_patches_per_axis)
-    patch_size_h = math.floor(img.shape[2] / nr_of_patches_per_axis)
-
-    patches = img.unfold(0, 3, 3).unfold(1, patch_size_w, patch_size_h).unfold(2, patch_size_w, patch_size_h)
-
-    patches = t.reshape(patches, (nr_of_patches_per_axis ** 2, 3, patch_size_w, patch_size_h))
-
-    return patches
+from src.model.Transformer import ViT
 
 
 if __name__ == "__main__":
@@ -30,10 +18,9 @@ if __name__ == "__main__":
     train_masks_path = "data/hotel-id-to-combat-human-trafficking-2022-fgvc9/train_masks"
     val_split = 0.2
 
-    transform = transforms.Compose([transforms.Resize(1024),
-                                    transforms.CenterCrop(1024),
-                                    transforms.ToTensor(),
-                                    transforms.Lambda(generatePatches)])
+    transform = transforms.Compose([transforms.Resize(512),
+                                    transforms.CenterCrop(512),
+                                    transforms.ToTensor()])
 
     dataset = TrainDataset(transform,
                            train_images_path,
@@ -52,9 +39,21 @@ if __name__ == "__main__":
                                 batch_size=16,
                                 shuffle=False)
 
-    model = AlexNet(3116,
-                    0.001,
-                    dataset.hotel_id_mapping)
+    model = ViT(
+        model_kwargs={
+            'embed_dim': 256,
+            'hidden_dim': 512,
+            'num_heads': 8,
+            'num_layers': 2,
+            'patch_size': 64,
+            'num_channels': 3,
+            'num_patches': 64,
+            'num_classes': 3116,
+            'dropout': 0.2
+        },
+        hotel_id_mapping=dataset.hotel_id_mapping,
+        lr=3e-4
+    )
 
     pattern = "epoch_{epoch:04d}.ndcg_{val_ndcg@5_epoch:.6f}"
     ModelCheckpoint.CHECKPOINT_NAME_LAST = pattern + ".last"
