@@ -3,9 +3,7 @@ from typing import Tuple
 import pandas as pd
 import pytorch_lightning as pl
 from torch import optim, nn
-from torchmetrics.functional import retrieval_normalized_dcg
-from torch.nn.functional import one_hot
-import torch
+import torch as t
 
 from src.module.VisionTransformer import VisionTransformer
 
@@ -32,12 +30,28 @@ class ViT(pl.LightningModule):
     def forward(self, x):
         return self.model(x)
 
+
+    def mean_average_precision(self, predictions: t.Tensor, targets: t.Tensor, k=5) -> t.Tensor:
+        u, _ = predictions.shape
+
+        top_k = t.topk(predictions, k, dim=1).indices
+
+        scores = t.zeros(targets.shape)
+
+        for i in range(k):
+            relevance = t.zeros((u, i+1))
+            relevance[:, i] = 1
+
+            scores += t.mean((top_k[:, :i+1] == targets[:, None]).float() * relevance, dim=1)
+
+        return t.mean(scores)
+
     def configure_optimizers(self):
         optimizer = optim.AdamW(self.parameters(), lr=self.hparams.lr)
         lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100,150], gamma=0.1)
         return [optimizer], [lr_scheduler]
 
-    def _calculate_loss(self, batch: Tuple[torch.Tensor, torch.Tensor], mode: str = "train") -> torch.Tensor:
+    def _calculate_loss(self, batch: Tuple[t.Tensor, t.Tensor], mode: str = "train") -> t.Tensor:
         x, y = batch
 
         y_hat = self.forward(x)
@@ -46,7 +60,7 @@ class ViT(pl.LightningModule):
 
         acc = (y_hat.argmax(dim=-1) == y).float().mean()
 
-        self.log(f"{mode}_ndcg@5", retrieval_normalized_dcg(y_hat, one_hot(y, self.num_classes), k=5),
+        self.log(f"{mode}_MAP@5", self.mean_average_precision(y_hat, y, k=5),
                  prog_bar=True, on_epoch=True, on_step=False)
         self.log(f"{mode}_loss", loss,
                  prog_bar=True, on_step=False, on_epoch=True)
@@ -56,21 +70,21 @@ class ViT(pl.LightningModule):
 
         return loss
 
-    def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], *args, **kwargs) -> torch.Tensor:
+    def training_step(self, batch: Tuple[t.Tensor, t.Tensor], *args, **kwargs) -> t.Tensor:
         loss = self._calculate_loss(batch, mode="train")
         return loss
 
-    def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], *args, **kwargs):
+    def validation_step(self, batch: Tuple[t.Tensor, t.Tensor], *args, **kwargs):
         self._calculate_loss(batch, mode="val")
 
-    def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], *args, **kwargs):
+    def test_step(self, batch: Tuple[t.Tensor, t.Tensor], *args, **kwargs):
         images, image_names = batch
 
         predictions = self.forward(images)
 
         for i, prediction in enumerate(predictions):
             # Get top 5 predictions
-            top_5 = torch.topk(prediction, 5).indices
+            top_5 = t.topk(prediction, 5).indices
             hotel_ids = " ".join([str(self.hotel_id_mapping[top_i]) for top_i in top_5.tolist()])
 
             self.test_df = self.test_df.append({'image_id': image_names[i], 'hotel_id': hotel_ids}, ignore_index=True)
