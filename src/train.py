@@ -20,6 +20,20 @@ if __name__ == "__main__":
 
     transform = transforms.Compose([transforms.Resize(512),
                                     transforms.CenterCrop(512),
+                                    transforms.RandomOrder([
+                                        transforms.RandomHorizontalFlip(p = 0.3),
+                                        transforms.RandomChoice([
+                                            transforms.RandomAdjustSharpness(sharpness_factor = 2, p = 0.3), #Sharpen the image
+                                            transforms.RandomAdjustSharpness(sharpness_factor = 0, p = 0.3) #Blur the image
+                                        ]),
+                                        transforms.RandomPerspective(distortion_scale = 0.6, p = 0.3),
+                                        transforms.RandomRotation(degrees = (0, 45)),
+                                        transforms.RandomPosterize(bits = 2, p = 0.3),
+                                        transforms.RandomChoice([
+                                            transforms.RandomAutocontrast(),
+                                            transforms.RandomEqualize()
+                                            ]),
+                                        ]),
                                     transforms.ToTensor()])
 
     dataset = TrainDataset(transform,
