@@ -13,6 +13,14 @@ https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial15/
 """
 
 
+def mean_average_precision(predictions: t.Tensor, targets: t.Tensor, k=5) -> t.Tensor:
+    u, _ = predictions.shape
+
+    top_k = t.topk(predictions, k, dim=1).indices
+
+    return t.sum(1 / t.sum((t.triu(t.ones((u, k, k)), diagonal=1) == 0)[top_k == targets[:, None]], dim=1)) / u
+
+
 class ViT(pl.LightningModule):
 
     def __init__(self, model_kwargs: dict, hotel_id_mapping: dict, lr: float):
@@ -30,25 +38,9 @@ class ViT(pl.LightningModule):
     def forward(self, x):
         return self.model(x)
 
-
-    def mean_average_precision(self, predictions: t.Tensor, targets: t.Tensor, k=5) -> t.Tensor:
-        u, _ = predictions.shape
-
-        top_k = t.topk(predictions, k, dim=1).indices
-
-        scores = t.zeros(targets.shape)
-
-        for i in range(k):
-            relevance = t.zeros((u, i+1))
-            relevance[:, i] = 1
-
-            scores += t.mean((top_k[:, :i+1] == targets[:, None]).float() * relevance, dim=1)
-
-        return t.mean(scores)
-
     def configure_optimizers(self):
         optimizer = optim.AdamW(self.parameters(), lr=self.hparams.lr)
-        lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100,150], gamma=0.1)
+        lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100, 150], gamma=0.1)
         return [optimizer], [lr_scheduler]
 
     def _calculate_loss(self, batch: Tuple[t.Tensor, t.Tensor], mode: str = "train") -> t.Tensor:
@@ -60,7 +52,7 @@ class ViT(pl.LightningModule):
 
         acc = (y_hat.argmax(dim=-1) == y).float().mean()
 
-        self.log(f"{mode}_MAP@5", self.mean_average_precision(y_hat, y, k=5),
+        self.log(f"{mode}_MAP@5", mean_average_precision(y_hat, y, k=5),
                  prog_bar=True, on_epoch=True, on_step=False)
         self.log(f"{mode}_loss", loss,
                  prog_bar=True, on_step=False, on_epoch=True)

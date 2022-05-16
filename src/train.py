@@ -66,8 +66,8 @@ if __name__ == "__main__":
     )
 
     trainer = pytorch_lightning.Trainer(
-        max_epochs=4,
-        gpus=0,
+        max_epochs=30,
+        gpus=1,
         callbacks=[checkpointer, LearningRateMonitor()],
         default_root_dir="logs",
     )
