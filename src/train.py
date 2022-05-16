@@ -43,13 +43,13 @@ if __name__ == "__main__":
         model_kwargs={
             'embed_dim': 256,
             'hidden_dim': 512,
-            'num_heads': 8,
-            'num_layers': 2,
+            'num_heads': 16,
+            'num_layers': 6,
             'patch_size': 64,
             'num_channels': 3,
             'num_patches': 64,
             'num_classes': 3116,
-            'dropout': 0.2
+            'dropout': 0.5
         },
         hotel_id_mapping=dataset.hotel_id_mapping,
         lr=3e-4
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     )
 
     trainer = pytorch_lightning.Trainer(
-        max_epochs=4,
+        max_epochs=30,
         gpus=1,
         callbacks=[checkpointer, LearningRateMonitor()],
         default_root_dir="logs",
