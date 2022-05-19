@@ -56,7 +56,6 @@ class ViT(pl.LightningModule):
                  prog_bar=True, on_epoch=True, on_step=False)
         self.log(f"{mode}_loss", loss,
                  prog_bar=True, on_step=False, on_epoch=True)
-
         self.log(f"{mode}_acc", acc,
                  prog_bar=True, on_step=False, on_epoch=True)
 
@@ -79,7 +78,8 @@ class ViT(pl.LightningModule):
             top_5 = t.topk(prediction, 5).indices
             hotel_ids = " ".join([str(self.hotel_id_mapping[top_i]) for top_i in top_5.tolist()])
 
-            self.test_df = self.test_df.append({'image_id': image_names[i], 'hotel_id': hotel_ids}, ignore_index=True)
+            self.test_df = pd.concat((self.test_df, pd.DataFrame({'image_id': [image_names[i]], 'hotel_id': [hotel_ids]})), ignore_index=True)
 
     def on_test_end(self) -> None:
+        self.test_df = self.test_df.sort_values(by='image_id')
         self.test_df.to_csv('/kaggle/working/submission.csv', columns=['image_id', 'hotel_id'], index=False)
