@@ -5,7 +5,8 @@ import pytorch_lightning as pl
 from torch import optim, nn
 import torch as t
 
-from src.module.VisionTransformer import VisionTransformer
+from module.ArcMarginProduct import ArcMarginProduct
+from module.VisionTransformer import VisionTransformer
 
 """
 Code copied from 
@@ -26,7 +27,9 @@ class ViT(pl.LightningModule):
     def __init__(self, model_kwargs: dict, hotel_id_mapping: dict, lr: float):
         super().__init__()
         self.save_hyperparameters()
-        self.model = VisionTransformer(**model_kwargs)
+        self.embedding_model = VisionTransformer(**model_kwargs)
+        self.arcface = ArcMarginProduct(model_kwargs['embed_dim'], model_kwargs['num_classes'], self.device)
+        self.softmax = nn.Softmax(dim=1)
 
         self.hotel_id_mapping = hotel_id_mapping
 
@@ -36,7 +39,7 @@ class ViT(pl.LightningModule):
         self.test_df = pd.DataFrame(columns={'image_id', 'hotel_id'})
 
     def forward(self, x):
-        return self.model(x)
+        return self.embedding_model(x)
 
     def configure_optimizers(self):
         optimizer = optim.AdamW(self.parameters(), lr=self.hparams.lr)
@@ -46,7 +49,8 @@ class ViT(pl.LightningModule):
     def _calculate_loss(self, batch: Tuple[t.Tensor, t.Tensor], mode: str = "train") -> t.Tensor:
         x, y = batch
 
-        y_hat = self.forward(x)
+        embedding = self.forward(x)
+        y_hat = self.softmax(self.arcface(embedding, y))
 
         loss = self.loss(y_hat, y)
 
@@ -71,7 +75,8 @@ class ViT(pl.LightningModule):
     def test_step(self, batch: Tuple[t.Tensor, t.Tensor], *args, **kwargs):
         images, image_names = batch
 
-        predictions = self.forward(images)
+        embeddings = self.forward(images)
+        predictions = self.arcface(embeddings)
 
         for i, prediction in enumerate(predictions):
             # Get top 5 predictions
