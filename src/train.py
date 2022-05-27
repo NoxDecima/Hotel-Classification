@@ -1,43 +1,25 @@
-import math
-
 import pytorch_lightning
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
-from torch.utils.data import DataLoader
-from torchvision import transforms
-import torch as t
 
-from data.TrainDataset import TrainDataset
 from model.Transformer import ViT
-
+from data.TrainDataModule import TrainDataModule
 
 if __name__ == "__main__":
-
     pytorch_lightning.seed_everything(1234)
 
-    train_images_path = "./data/train_images"
-    train_masks_path = "./data/train_masks"
+    train_images_path = "./data/hotel-id-to-combat-human-trafficking-2022-fgvc9/train_images"
     val_split = 0.2
+    img_size = 512
+    batch_size = 16
+    shuffle = True
 
-    transform = transforms.Compose([transforms.Resize(512),
-                                    transforms.CenterCrop(512),
-                                    transforms.ToTensor()])
-
-    dataset = TrainDataset(transform,
-                           train_images_path,
-                           train_masks_path)
-
-    train_set, val_set = t.utils.data.random_split(dataset,
-                                                   [int(len(dataset) * (1 - val_split)), int(len(dataset) * val_split)+1])
-
-    train_dataloader = DataLoader(train_set,
-                                  num_workers=8,
-                                  batch_size=16,
-                                  shuffle=True)
-
-    val_dataloader = DataLoader(val_set,
-                                num_workers=4,
-                                batch_size=16,
-                                shuffle=False)
+    train_dm = TrainDataModule(
+        train_images_path,
+        img_size=img_size,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        val_split=val_split
+    )
 
     model = ViT(
         model_kwargs={
@@ -51,7 +33,7 @@ if __name__ == "__main__":
             'num_classes': 3116,
             'dropout': 0.5
         },
-        hotel_id_mapping=dataset.hotel_id_mapping,
+        hotel_id_mapping=train_dm.hotel_id_mapping,
         lr=3e-4
     )
 
@@ -72,4 +54,4 @@ if __name__ == "__main__":
         default_root_dir="logs",
     )
 
-    trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
+    trainer.fit(model, train_dm)
