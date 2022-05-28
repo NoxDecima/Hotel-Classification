@@ -24,11 +24,16 @@ def mean_average_precision(predictions: t.Tensor, targets: t.Tensor, k=5) -> t.T
 
 class ViT(pl.LightningModule):
 
-    def __init__(self, model_kwargs: dict, hotel_id_mapping: dict, lr: float):
+    def __init__(self, model_kwargs: dict, hotel_id_mapping: dict, s: float, m: float, lr: float):
         super().__init__()
         self.save_hyperparameters()
         self.embedding_model = VisionTransformer(**model_kwargs)
-        self.arcface = ArcFace(model_kwargs['embed_dim'], model_kwargs['num_classes'])
+        self.arcface = ArcFace(
+            model_kwargs['embed_dim'],
+            model_kwargs['num_classes'],
+            s=s,
+            m=m
+        )
 
         self.hotel_id_mapping = hotel_id_mapping
 
