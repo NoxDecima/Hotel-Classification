@@ -5,8 +5,8 @@ import pytorch_lightning as pl
 from torch import optim, nn
 import torch as t
 
-from module.ArcMarginProduct import ArcMarginProduct
 from module.VisionTransformer import VisionTransformer
+from module.ArcFace import ArcFace
 
 """
 Code copied from 
@@ -28,12 +28,12 @@ class ViT(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.embedding_model = VisionTransformer(**model_kwargs)
-        self.arcface = ArcMarginProduct(model_kwargs['embed_dim'], model_kwargs['num_classes'], self.device)
-        self.softmax = nn.Softmax(dim=1)
+        self.arcface = ArcFace(model_kwargs['embed_dim'], model_kwargs['num_classes'])
 
         self.hotel_id_mapping = hotel_id_mapping
 
         self.loss = nn.CrossEntropyLoss()
+
         self.num_classes = model_kwargs['num_classes']
 
         self.test_df = pd.DataFrame(columns={'image_id', 'hotel_id'})
@@ -50,7 +50,7 @@ class ViT(pl.LightningModule):
         x, y = batch
 
         embedding = self.forward(x)
-        y_hat = self.softmax(self.arcface(embedding, y))
+        y_hat = self.arcface(embedding, y)
 
         loss = self.loss(y_hat, y)
 
