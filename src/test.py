@@ -9,7 +9,7 @@ if __name__ == "__main__":
     pytorch_lightning.seed_everything(1234)
 
     test_images_path = "./data/hotel-id-to-combat-human-trafficking-2022-fgvc9/test_images"
-    img_size = 512
+    img_size = 256
 
     _, _, test_transform = prepare_transforms(img_size)
 
@@ -20,10 +20,10 @@ if __name__ == "__main__":
                                   batch_size=16,
                                   shuffle=False)
 
-    model = ViT.load_from_checkpoint("./logs/lightning_logs/version_21/checkpoints/epoch_0029.MAP_0.159427.last.ckpt")
+    model = ViT.load_from_checkpoint("./logs/lightning_logs/small_ds_s2022/checkpoints/epoch_0009.MAP_1.000000.last.ckpt")
 
     trainer = pytorch_lightning.Trainer(
-        max_epochs=30,
+        max_epochs=10,
         gpus=1,
     )
 
