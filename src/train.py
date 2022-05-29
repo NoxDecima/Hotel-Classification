@@ -7,10 +7,10 @@ from data.TrainDataModule import TrainDataModule
 if __name__ == "__main__":
     pytorch_lightning.seed_everything(1234)
 
-    train_images_path = "./data/hotel-id-to-combat-human-trafficking-2022-fgvc9/train_images"
+    train_images_path = "./data/small_images"
     val_split = 0.2
     img_size = 256
-    batch_size = 16
+    batch_size = 64
     shuffle = True
 
     train_dm = TrainDataModule(
@@ -26,7 +26,7 @@ if __name__ == "__main__":
             'embed_dim': 512,
             'hidden_dim': 1024,
             'num_heads': 16,
-            'num_layers': 8,
+            'num_layers': 4,
             'patch_size': 32,
             'num_channels': 3,
             'num_patches': 64,
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         hotel_id_mapping=train_dm.hotel_id_mapping,
         lr=3e-4,
         s=32.0,
-        m=0.1
+        m=0.2
     )
 
     pattern = "epoch_{epoch:04d}.MAP_{val_MAP@5:.6f}"

@@ -30,8 +30,10 @@ class TrainDataModule(LightningDataModule):
 
         train_transform, val_transform, _ = prepare_transforms(img_size)
 
-        train_set = TrainDataset(train_df.reset_index(), train_transform)
-        val_set = TrainDataset(val_df.reset_index(), val_transform)
+        image_path = os.path.join(path, "images")
+
+        train_set = TrainDataset(image_path, train_df.reset_index(), train_transform)
+        val_set = TrainDataset(image_path, val_df.reset_index(), val_transform)
 
         self.train_data = DataLoader(train_set,
                                       num_workers=8,
@@ -51,22 +53,14 @@ class TrainDataModule(LightningDataModule):
 
 
 def prepare_train_dataframe(path: str) -> Tuple[pd.DataFrame, Dict]:
-    hotel_id_mapping = {}
+    data_df = pd.read_csv(os.path.join(path, "train.csv"))
+    # encode hotel ids
+    data_df["hotel_id_code"] = data_df["hotel_id"].astype('category').cat.codes.values.astype(np.int64)
+    # convert hotel_id encoding to dict
+    hotel_id_code_df = data_df.drop(columns=["image_id"]).drop_duplicates().reset_index(drop=True)
+    hotel_id_mapping = hotel_id_code_df.set_index('hotel_id_code').to_dict()["hotel_id"]
 
-    class_dirs = os.listdir(path)
-
-    df = pd.DataFrame(columns={'class_id', 'image_id', 'path'})
-    for i, hotel_id in enumerate(tqdm(class_dirs, desc="Preparing dataset")):
-        for dirname, _, images in os.walk(os.path.join(path, hotel_id)):
-            for image_id in images:
-                df = pd.concat((df, pd.DataFrame({'class_id': [i], 'image_id': [image_id], 'path': [dirname]})),
-                               ignore_index=True)
-
-        hotel_id_mapping[i] = int(hotel_id)
-
-    # TODO save dataframe and load it for known dataset.
-
-    return df, hotel_id_mapping
+    return data_df, hotel_id_mapping
 
 
 def prepare_transforms(img_size: int) -> Tuple[Any, Any, Any]:
@@ -104,6 +98,7 @@ def prepare_transforms(img_size: int) -> Tuple[Any, Any, Any]:
 
     # no augmentations
     test_transform = a.Compose([
+        # TODO add padding !!!
         a.Resize(img_size, img_size),
         a.ToFloat(),
         apt.transforms.ToTensorV2(),
