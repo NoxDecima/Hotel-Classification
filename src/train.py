@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     train_images_path = "./data/hotel-id-to-combat-human-trafficking-2022-fgvc9/train_images"
     val_split = 0.2
-    img_size = 512
+    img_size = 256
     batch_size = 16
     shuffle = True
 
@@ -25,9 +25,9 @@ if __name__ == "__main__":
         model_kwargs={
             'embed_dim': 512,
             'hidden_dim': 1024,
-            'num_heads': 8,
-            'num_layers': 2,
-            'patch_size': 64,
+            'num_heads': 16,
+            'num_layers': 8,
+            'patch_size': 32,
             'num_channels': 3,
             'num_patches': 64,
             'num_classes': 3116,
@@ -35,8 +35,8 @@ if __name__ == "__main__":
         },
         hotel_id_mapping=train_dm.hotel_id_mapping,
         lr=3e-4,
-        s=64.0,
-        m=0.2
+        s=32.0,
+        m=0.1
     )
 
     pattern = "epoch_{epoch:04d}.MAP_{val_MAP@5:.6f}"
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     )
 
     trainer = pytorch_lightning.Trainer(
-        max_epochs=30,
+        max_epochs=10,
         gpus=1,
         callbacks=[checkpointer, LearningRateMonitor()],
         default_root_dir="logs",

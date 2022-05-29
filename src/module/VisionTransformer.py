@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from src.module.AttentionBlock import AttentionBlock
+from module.AttentionBlock import AttentionBlock
 
 """
 Code copied from 

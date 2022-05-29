@@ -6,7 +6,7 @@ from torch import optim, nn
 import torch as t
 
 from module.VisionTransformer import VisionTransformer
-from module.ArcFace import ArcFace
+from module.ArcFace import ArcFace, NormalizedLinear
 
 """
 Code copied from 
@@ -28,9 +28,11 @@ class ViT(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.embedding_model = VisionTransformer(**model_kwargs)
-        self.arcface = ArcFace(
+        self.prediction_layer = NormalizedLinear(
             model_kwargs['embed_dim'],
-            model_kwargs['num_classes'],
+            model_kwargs['num_classes']
+        )
+        self.arcface_loss = ArcFace(
             s=s,
             m=m
         )
@@ -44,7 +46,7 @@ class ViT(pl.LightningModule):
         self.test_df = pd.DataFrame(columns={'image_id', 'hotel_id'})
 
     def forward(self, x):
-        return self.embedding_model(x)
+        return self.prediction_layer(self.embedding_model(x))
 
     def configure_optimizers(self):
         optimizer = optim.AdamW(self.parameters(), lr=self.hparams.lr)
@@ -54,10 +56,9 @@ class ViT(pl.LightningModule):
     def _calculate_loss(self, batch: Tuple[t.Tensor, t.Tensor], mode: str = "train") -> t.Tensor:
         x, y = batch
 
-        embedding = self.forward(x)
-        y_hat = self.arcface(embedding, y)
+        y_hat = self.forward(x)
 
-        loss = self.loss(y_hat, y)
+        loss = self.loss(self.arcface_loss(y_hat, y), y)
 
         acc = (y_hat.argmax(dim=-1) == y).float().mean()
 
@@ -80,8 +81,7 @@ class ViT(pl.LightningModule):
     def test_step(self, batch: Tuple[t.Tensor, t.Tensor], *args, **kwargs):
         images, image_names = batch
 
-        embeddings = self.forward(images)
-        predictions = self.arcface(embeddings)
+        predictions = self.forward(images)
 
         for i, prediction in enumerate(predictions):
             # Get top 5 predictions
