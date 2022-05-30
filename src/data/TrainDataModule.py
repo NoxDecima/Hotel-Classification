@@ -69,7 +69,7 @@ def prepare_transforms(img_size: int) -> Tuple[Any, Any, Any]:
         a.ShiftScaleRotate(p=0.5, border_mode=cv2.BORDER_CONSTANT),
         a.OpticalDistortion(p=0.25),
         a.Perspective(p=0.25),
-        a.CoarseDropout(p=0.5, min_holes=1, max_holes=6,
+        a.CoarseDropout(p=0.5, min_holes=4, max_holes=8,
                         min_height=img_size // 16, max_height=img_size // 4,
                         min_width=img_size // 16, max_width=img_size // 4),  # normal coarse dropout
 
@@ -96,7 +96,6 @@ def prepare_transforms(img_size: int) -> Tuple[Any, Any, Any]:
 
     # no augmentations
     test_transform = a.Compose([
-        # TODO add padding !!!
         a.Resize(img_size, img_size),
         a.ToFloat(),
         apt.transforms.ToTensorV2(),
