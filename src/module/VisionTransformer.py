@@ -32,7 +32,15 @@ class VisionTransformer(nn.Module):
         self.patch_size = patch_size
 
         # Layers/Networks
-        self.input_layer = nn.Linear(num_channels * (patch_size ** 2), embed_dim)
+        self.input_layer = nn.Sequential(
+            nn.Conv2d(num_channels, 32, kernel_size=5, padding=2),
+            nn.GELU(),
+            nn.MaxPool2d(2, stride=2),
+            nn.Flatten(),
+            nn.Linear(8192, embed_dim),
+            nn.GELU()
+        )
+
         self.transformer = nn.Sequential(
             *[AttentionBlock(embed_dim, hidden_dim, num_heads, dropout=dropout) for _ in range(num_layers)])
         self.dropout = nn.Dropout(dropout)
@@ -43,9 +51,11 @@ class VisionTransformer(nn.Module):
 
     def forward(self, x):
         # Preprocess input
-        x = img_to_patch(x, self.patch_size)
-        B, T, _ = x.shape
+        x = img_to_patch(x, self.patch_size, flatten_channels=False)
+        B, T, C, H, W = x.shape
+        x = x.reshape((B*T, C, H, W))
         x = self.input_layer(x)
+        x = x.reshape(B, T, -1)
 
         # Add CLS token and positional encoding
         cls_token = self.cls_token.repeat(B, 1, 1)
