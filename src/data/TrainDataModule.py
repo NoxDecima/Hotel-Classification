@@ -12,8 +12,6 @@ import albumentations as a
 import albumentations.pytorch as apt
 from torch.utils.data import DataLoader
 
-from tqdm import tqdm
-
 from data.TrainDataset import TrainDataset
 
 

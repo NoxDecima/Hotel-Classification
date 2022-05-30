@@ -12,7 +12,8 @@ class ArcFace(nn.Module):
         self.s = s
         self.m = m * math.pi
 
-    def forward(self, cosine: torch.Tensor, label: torch.Tensor):
+    def forward(self, input: torch.Tensor, label: torch.Tensor):
+        cosine = input.clone()
         cosine.acos_()
 
         index = torch.where(label != -1)[0]
@@ -20,7 +21,7 @@ class ArcFace(nn.Module):
         m_hot.scatter_(1, label[index, None], self.m)
         cosine[index] += m_hot
 
-        cosine.cos_().mul_(self.s)
+        cosine.clamp_(max=math.pi).cos_().mul_(self.s)
 
         return cosine
 
