@@ -25,7 +25,7 @@ if __name__ == "__main__":
         model_kwargs={
             'embed_dim': 512,
             'hidden_dim': 1024,
-            'num_heads': 32,
+            'num_heads': 64,
             'num_layers': 4,
             'patch_size': 32,
             'num_channels': 3,
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         hotel_id_mapping=train_dm.hotel_id_mapping,
         lr=3e-4,
         s=32.0,
-        m=0.0
+        m=0.07
     )
 
     pattern = "epoch_{epoch:04d}.MAP_{val_MAP@5:.6f}"
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     )
 
     trainer = pytorch_lightning.Trainer(
-        max_epochs=100,
+        max_epochs=200,
         gpus=1,
         callbacks=[checkpointer, LearningRateMonitor()],
         default_root_dir="logs",
