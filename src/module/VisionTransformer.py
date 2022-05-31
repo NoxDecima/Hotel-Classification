@@ -33,11 +33,14 @@ class VisionTransformer(nn.Module):
 
         # Layers/Networks
         self.input_layer = nn.Sequential(
-            nn.Conv2d(num_channels, 32, kernel_size=5, padding=2),
+            nn.Conv2d(num_channels, 64, kernel_size=5, padding=2),
+            nn.GELU(),
+            nn.MaxPool2d(2, stride=2),
+            nn.Conv2d(64, 16, kernel_size=5, padding=2),
             nn.GELU(),
             nn.MaxPool2d(2, stride=2),
             nn.Flatten(),
-            nn.Linear(8192, embed_dim),
+            nn.Linear(1024, embed_dim),
             nn.GELU()
         )
 
