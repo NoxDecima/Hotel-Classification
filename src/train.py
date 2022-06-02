@@ -59,6 +59,8 @@ if __name__ == "__main__":
     # TODO Prevent overfitting in model
     # Crank up data augmentation
     # Add more CNN layers
+    # Increase number of heads
     # Increase m
+
 
     trainer.fit(model, train_dm)

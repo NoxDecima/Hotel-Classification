@@ -47,10 +47,13 @@ class VisionTransformer(nn.Module):
         self.transformer = nn.Sequential(
             *[AttentionBlock(embed_dim, hidden_dim, num_heads, dropout=dropout) for _ in range(num_layers)])
         self.dropout = nn.Dropout(dropout)
+        self.layer_norm = nn.LayerNorm()
 
         # Parameters/Embeddings
         self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim))
         self.pos_embedding = nn.Parameter(torch.randn(1, 1 + num_patches, embed_dim))
+
+
 
     def forward(self, x):
         # Preprocess input
@@ -72,6 +75,7 @@ class VisionTransformer(nn.Module):
 
         # Perform classification prediction
         cls = x[0]
+        cls = self.layer_norm(cls)
         return cls
 
 
